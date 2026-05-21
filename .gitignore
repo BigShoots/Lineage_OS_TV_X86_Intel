@@ -1,0 +1,15 @@
+out/
+work/
+tools/
+*.iso
+*.img
+*.efs
+*.sfs
+*.7z
+*.7z.*
+*.zip
+*.apk
+*.idsig
+build/
+docs/
+memory.md

@@ -1,0 +1,810 @@
+diff --git a/AudioOutputSwitch/Android.mk b/AudioOutputSwitch/Android.mk
+new file mode 100644
+index 0000000..b195b09
+--- /dev/null
++++ b/AudioOutputSwitch/Android.mk
+@@ -0,0 +1,16 @@
++LOCAL_PATH := $(call my-dir)
++
++include $(CLEAR_VARS)
++
++LOCAL_PACKAGE_NAME := AudioOutputSwitch
++LOCAL_MODULE_TAGS := optional
++LOCAL_SYSTEM_EXT_MODULE := true
++LOCAL_PRIVILEGED_MODULE := true
++LOCAL_CERTIFICATE := platform
++LOCAL_PRIVATE_PLATFORM_APIS := true
++
++LOCAL_MANIFEST_FILE := AndroidManifest.xml
++LOCAL_SRC_FILES := $(call all-java-files-under, src)
++LOCAL_RESOURCE_DIR := $(LOCAL_PATH)/res
++
++include $(BUILD_PACKAGE)
+diff --git a/AudioOutputSwitch/AndroidManifest.xml b/AudioOutputSwitch/AndroidManifest.xml
+new file mode 100644
+index 0000000..9716c80
+--- /dev/null
++++ b/AudioOutputSwitch/AndroidManifest.xml
+@@ -0,0 +1,46 @@
++<?xml version="1.0" encoding="utf-8"?>
++<manifest xmlns:android="http://schemas.android.com/apk/res/android"
++    package="org.lineageos.tv.audiooutput"
++    android:versionCode="1"
++    android:versionName="1.0">
++
++    <uses-permission android:name="android.permission.MODIFY_AUDIO_ROUTING" />
++    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
++    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
++
++    <application
++        android:allowBackup="false"
++        android:directBootAware="true"
++        android:extractNativeLibs="false"
++        android:icon="@drawable/sound_icon"
++        android:label="@string/app_name"
++        android:supportsRtl="true"
++        android:theme="@style/AudioOutputTheme"
++        android:usesNonSdkApi="true">
++
++        <activity
++            android:name=".AudioOutputActivity"
++            android:exported="true"
++            android:label="@string/sound_pref_title">
++            <intent-filter>
++                <action android:name="com.android.tv.settings.SOUND" />
++                <category android:name="android.intent.category.DEFAULT" />
++            </intent-filter>
++            <intent-filter>
++                <action android:name="android.intent.action.MAIN" />
++                <category android:name="android.intent.category.LEANBACK_LAUNCHER" />
++            </intent-filter>
++        </activity>
++
++        <receiver
++            android:name=".BootReceiver"
++            android:directBootAware="true"
++            android:enabled="true"
++            android:exported="false">
++            <intent-filter>
++                <action android:name="android.intent.action.BOOT_COMPLETED" />
++                <action android:name="android.intent.action.LOCKED_BOOT_COMPLETED" />
++            </intent-filter>
++        </receiver>
++    </application>
++</manifest>
+diff --git a/AudioOutputSwitch/res/drawable/sound_icon.xml b/AudioOutputSwitch/res/drawable/sound_icon.xml
+new file mode 100644
+index 0000000..1c810cd
+--- /dev/null
++++ b/AudioOutputSwitch/res/drawable/sound_icon.xml
+@@ -0,0 +1,16 @@
++<?xml version="1.0" encoding="utf-8"?>
++<vector xmlns:android="http://schemas.android.com/apk/res/android"
++    android:width="48dp"
++    android:height="48dp"
++    android:viewportWidth="48"
++    android:viewportHeight="48">
++    <path
++        android:fillColor="#FFFFFFFF"
++        android:pathData="M6,18 L15,18 L27,8 L27,40 L15,30 L6,30 Z" />
++    <path
++        android:fillColor="#FFFFFFFF"
++        android:pathData="M32,16 C35,18 37,21 37,24 C37,27 35,30 32,32 L30,28 C31.8,27 33,25.6 33,24 C33,22.4 31.8,21 30,20 Z" />
++    <path
++        android:fillColor="#FFFFFFFF"
++        android:pathData="M36,9 C42,13 45,18.2 45,24 C45,29.8 42,35 36,39 L34,35 C38.5,32 41,28.2 41,24 C41,19.8 38.5,16 34,13 Z" />
++</vector>
+diff --git a/AudioOutputSwitch/res/values/colors.xml b/AudioOutputSwitch/res/values/colors.xml
+new file mode 100644
+index 0000000..acb95c6
+--- /dev/null
++++ b/AudioOutputSwitch/res/values/colors.xml
+@@ -0,0 +1,4 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <color name="audio_output_background">#101318</color>
++</resources>
+diff --git a/AudioOutputSwitch/res/values/strings.xml b/AudioOutputSwitch/res/values/strings.xml
+new file mode 100644
+index 0000000..74cbdc5
+--- /dev/null
++++ b/AudioOutputSwitch/res/values/strings.xml
+@@ -0,0 +1,19 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="app_name">Audio Output Switch</string>
++    <string name="sound_pref_title">Audio output</string>
++    <string name="sound_pref_summary">Choose the media playback device.</string>
++    <string name="audio_output_title">Audio output</string>
++    <string name="audio_output_summary">Select the output device used for media playback.</string>
++    <string name="system_default">System default</string>
++    <string name="unknown_device">Unknown audio device</string>
++    <string name="status_select_device">Choose an output device.</string>
++    <string name="status_selected">Using %1$s for media playback.</string>
++    <string name="status_default_selected">Using the system default audio output.</string>
++    <string name="status_device_unavailable">That audio device is no longer available.</string>
++    <string name="status_saved_device_cleared">Saved device is not currently safe to use: %1$s. Using system default.</string>
++    <string name="status_saved_device_missing">Saved device is not currently available: %1$s.</string>
++    <string name="status_route_rejected">Audio policy did not accept %1$s.</string>
++    <string name="status_default_rejected">Audio policy did not clear the preferred device.</string>
++    <string name="status_route_failed">Audio routing failed: %1$s</string>
++</resources>
+diff --git a/AudioOutputSwitch/res/values/styles.xml b/AudioOutputSwitch/res/values/styles.xml
+new file mode 100644
+index 0000000..995e828
+--- /dev/null
++++ b/AudioOutputSwitch/res/values/styles.xml
+@@ -0,0 +1,8 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <style name="AudioOutputTheme" parent="@android:style/Theme.Material.NoActionBar">
++        <item name="android:windowBackground">@color/audio_output_background</item>
++        <item name="android:fontFamily">sans</item>
++        <item name="android:colorAccent">#8AB4F8</item>
++    </style>
++</resources>
+diff --git a/AudioOutputSwitch/src/org/lineageos/tv/audiooutput/AudioOutputActivity.java b/AudioOutputSwitch/src/org/lineageos/tv/audiooutput/AudioOutputActivity.java
+new file mode 100644
+index 0000000..5f8f210
+--- /dev/null
++++ b/AudioOutputSwitch/src/org/lineageos/tv/audiooutput/AudioOutputActivity.java
+@@ -0,0 +1,153 @@
++package org.lineageos.tv.audiooutput;
++
++import android.app.Activity;
++import android.content.Context;
++import android.graphics.Color;
++import android.os.Bundle;
++import android.view.Gravity;
++import android.view.View;
++import android.view.ViewGroup;
++import android.widget.AdapterView;
++import android.widget.ArrayAdapter;
++import android.widget.CheckedTextView;
++import android.widget.LinearLayout;
++import android.widget.ListView;
++import android.widget.TextView;
++import android.widget.Toast;
++
++import java.util.List;
++
++public final class AudioOutputActivity extends Activity {
++    private RouteAdapter mAdapter;
++    private ListView mListView;
++    private TextView mStatusView;
++
++    @Override
++    protected void onCreate(Bundle savedInstanceState) {
++        super.onCreate(savedInstanceState);
++        buildUi();
++        refreshRoutes(getString(R.string.status_select_device));
++    }
++
++    @Override
++    protected void onResume() {
++        super.onResume();
++        refreshRoutes(null);
++    }
++
++    private void buildUi() {
++        LinearLayout root = new LinearLayout(this);
++        root.setOrientation(LinearLayout.VERTICAL);
++        root.setGravity(Gravity.CENTER_HORIZONTAL);
++        root.setPadding(dp(32), dp(28), dp(32), dp(24));
++        root.setBackgroundColor(Color.rgb(16, 19, 24));
++
++        TextView title = new TextView(this);
++        title.setText(R.string.audio_output_title);
++        title.setTextColor(Color.WHITE);
++        title.setTextSize(28);
++        title.setGravity(Gravity.START);
++        title.setPadding(0, 0, 0, dp(8));
++        root.addView(title, new LinearLayout.LayoutParams(
++                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
++
++        TextView summary = new TextView(this);
++        summary.setText(R.string.audio_output_summary);
++        summary.setTextColor(Color.rgb(189, 197, 208));
++        summary.setTextSize(16);
++        summary.setPadding(0, 0, 0, dp(18));
++        root.addView(summary, new LinearLayout.LayoutParams(
++                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
++
++        mListView = new ListView(this);
++        mListView.setChoiceMode(ListView.CHOICE_MODE_SINGLE);
++        mListView.setItemsCanFocus(false);
++        mListView.setSelector(android.R.drawable.list_selector_background);
++        mListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
++            @Override
++            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
++                AudioRouteManager.RouteItem item = mAdapter.getItem(position);
++                if (item != null) {
++                    selectRoute(item);
++                }
++            }
++        });
++        root.addView(mListView, new LinearLayout.LayoutParams(
++                ViewGroup.LayoutParams.MATCH_PARENT, 0, 1.0f));
++
++        mStatusView = new TextView(this);
++        mStatusView.setTextColor(Color.rgb(213, 218, 226));
++        mStatusView.setTextSize(14);
++        mStatusView.setMinLines(2);
++        mStatusView.setGravity(Gravity.START | Gravity.CENTER_VERTICAL);
++        mStatusView.setPadding(0, dp(12), 0, 0);
++        root.addView(mStatusView, new LinearLayout.LayoutParams(
++                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
++
++        setContentView(root);
++    }
++
++    private void refreshRoutes(String status) {
++        List<AudioRouteManager.RouteItem> routes = AudioRouteManager.getRouteItems(this);
++        if (mAdapter == null) {
++            mAdapter = new RouteAdapter(this, routes);
++            mListView.setAdapter(mAdapter);
++        } else {
++            mAdapter.clear();
++            mAdapter.addAll(routes);
++            mAdapter.notifyDataSetChanged();
++        }
++
++        int checked = AudioRouteManager.findSavedRouteIndex(this, routes);
++        if (checked >= 0) {
++            mListView.setItemChecked(checked, true);
++            mListView.setSelection(checked);
++        }
++
++        if (status != null) {
++            mStatusView.setText(status);
++        }
++    }
++
++    private void selectRoute(AudioRouteManager.RouteItem item) {
++        AudioRouteManager.RouteResult result;
++        if (item.isDefault()) {
++            result = AudioRouteManager.clearPreferredDeviceForMedia(this);
++            if (result.success) {
++                AudioRouteManager.saveDefaultRoute(this);
++            }
++        } else {
++            result = AudioRouteManager.setPreferredDeviceForMedia(this, item.device);
++            if (result.success) {
++                AudioRouteManager.saveRoute(this, item);
++            }
++        }
++
++        String message = result.message;
++        mStatusView.setText(message);
++        Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
++        refreshRoutes(message);
++    }
++
++    private int dp(int value) {
++        return (int) (value * getResources().getDisplayMetrics().density + 0.5f);
++    }
++
++    private final class RouteAdapter extends ArrayAdapter<AudioRouteManager.RouteItem> {
++        RouteAdapter(Context context, List<AudioRouteManager.RouteItem> routes) {
++            super(context, android.R.layout.simple_list_item_single_choice, routes);
++        }
++
++        @Override
++        public View getView(int position, View convertView, ViewGroup parent) {
++            View view = super.getView(position, convertView, parent);
++            CheckedTextView text = (CheckedTextView) view.findViewById(android.R.id.text1);
++            text.setTextColor(Color.WHITE);
++            text.setTextSize(20);
++            text.setGravity(Gravity.CENTER_VERTICAL);
++            text.setMinHeight(dp(58));
++            text.setPadding(dp(16), 0, dp(16), 0);
++            return view;
++        }
++    }
++}
+diff --git a/AudioOutputSwitch/src/org/lineageos/tv/audiooutput/AudioRouteManager.java b/AudioOutputSwitch/src/org/lineageos/tv/audiooutput/AudioRouteManager.java
+new file mode 100644
+index 0000000..1394922
+--- /dev/null
++++ b/AudioOutputSwitch/src/org/lineageos/tv/audiooutput/AudioRouteManager.java
+@@ -0,0 +1,365 @@
++package org.lineageos.tv.audiooutput;
++
++import android.content.Context;
++import android.content.SharedPreferences;
++import android.media.AudioAttributes;
++import android.media.AudioDeviceInfo;
++import android.media.AudioManager;
++import android.text.TextUtils;
++import android.util.Log;
++
++import java.lang.reflect.Constructor;
++import java.lang.reflect.InvocationTargetException;
++import java.lang.reflect.Method;
++import java.util.ArrayList;
++import java.util.Collections;
++import java.util.Comparator;
++import java.util.HashSet;
++import java.util.List;
++import java.util.Set;
++
++final class AudioRouteManager {
++    private static final String TAG = "AudioOutputSwitch";
++    private static final String PREFS = "audio_output_route";
++    private static final String KEY_TYPE = "route_type";
++    private static final String KEY_ADDRESS = "route_address";
++    private static final String KEY_LABEL = "route_label";
++    private static final int ROUTE_DEFAULT = -1;
++    private static final int ROLE_OUTPUT = 2;
++    private static final int TYPE_BUS = 21;
++    private static final int TYPE_TELEPHONY = 18;
++    private static final int TYPE_USB_HEADSET = 22;
++
++    private AudioRouteManager() {
++    }
++
++    static List<RouteItem> getRouteItems(Context context) {
++        ArrayList<RouteItem> routes = new ArrayList<RouteItem>();
++        routes.add(RouteItem.systemDefault(context.getString(R.string.system_default)));
++
++        AudioManager audioManager = getAudioManager(context);
++        if (audioManager == null) {
++            return routes;
++        }
++
++        Set<String> seen = new HashSet<String>();
++        AudioDeviceInfo[] devices = audioManager.getDevices(AudioManager.GET_DEVICES_OUTPUTS);
++        for (AudioDeviceInfo device : devices) {
++            if (!isSelectableOutput(device)) {
++                continue;
++            }
++            String address = addressFor(device);
++            String key = device.getType() + ":" + address;
++            if (seen.add(key)) {
++                routes.add(new RouteItem(device, device.getType(), address, labelFor(device)));
++            }
++        }
++
++        Collections.sort(routes.subList(1, routes.size()), new Comparator<RouteItem>() {
++            @Override
++            public int compare(RouteItem left, RouteItem right) {
++                return left.label.compareToIgnoreCase(right.label);
++            }
++        });
++        return routes;
++    }
++
++    static int findSavedRouteIndex(Context context, List<RouteItem> routes) {
++        SharedPreferences prefs = prefs(context);
++        int type = prefs.getInt(KEY_TYPE, ROUTE_DEFAULT);
++        String address = prefs.getString(KEY_ADDRESS, "");
++        for (int i = 0; i < routes.size(); i++) {
++            RouteItem item = routes.get(i);
++            if (type == ROUTE_DEFAULT && item.isDefault()) {
++                return i;
++            }
++            if (!item.isDefault() && item.type == type && TextUtils.equals(item.address, address)) {
++                return i;
++            }
++        }
++        return 0;
++    }
++
++    static void saveDefaultRoute(Context context) {
++        prefs(context).edit()
++                .putInt(KEY_TYPE, ROUTE_DEFAULT)
++                .putString(KEY_ADDRESS, "")
++                .putString(KEY_LABEL, "")
++                .apply();
++    }
++
++    static void saveRoute(Context context, RouteItem item) {
++        prefs(context).edit()
++                .putInt(KEY_TYPE, item.type)
++                .putString(KEY_ADDRESS, item.address)
++                .putString(KEY_LABEL, item.label)
++                .apply();
++    }
++
++    static RouteResult applySavedRoute(Context context) {
++        SharedPreferences prefs = prefs(context);
++        int type = prefs.getInt(KEY_TYPE, ROUTE_DEFAULT);
++        if (type == ROUTE_DEFAULT) {
++            return clearPreferredDeviceForMedia(context);
++        }
++
++        String address = prefs.getString(KEY_ADDRESS, "");
++        List<RouteItem> routes = getRouteItems(context);
++        for (RouteItem item : routes) {
++            if (!item.isDefault() && item.type == type && TextUtils.equals(item.address, address)) {
++                return setPreferredDeviceForMedia(context, item.device);
++            }
++        }
++
++        String savedLabel = prefs.getString(KEY_LABEL, context.getString(R.string.unknown_device));
++        RouteResult result = clearPreferredDeviceForMedia(context);
++        if (result.success) {
++            saveDefaultRoute(context);
++            return RouteResult.success(context.getString(R.string.status_saved_device_cleared,
++                    savedLabel));
++        }
++        return RouteResult.failure(context.getString(R.string.status_saved_device_missing,
++                savedLabel));
++    }
++
++    static RouteResult setPreferredDeviceForMedia(Context context, AudioDeviceInfo device) {
++        if (device == null) {
++            return RouteResult.failure(context.getString(R.string.status_device_unavailable));
++        }
++
++        try {
++            AudioManager audioManager = getAudioManager(context);
++            Object strategy = findMediaProductStrategy();
++            Object attributes = createAudioDeviceAttributes(device);
++            Method setPreferred = findMethod(
++                    AudioManager.class,
++                    "setPreferredDeviceForStrategy",
++                    strategy.getClass(),
++                    attributes.getClass());
++            Object result = setPreferred.invoke(audioManager, strategy, attributes);
++            if (Boolean.TRUE.equals(result)) {
++                return RouteResult.success(context.getString(R.string.status_selected, labelFor(device)));
++            }
++            return RouteResult.failure(context.getString(R.string.status_route_rejected, labelFor(device)));
++        } catch (Throwable e) {
++            Log.e(TAG, "Unable to set preferred media output", e);
++            return RouteResult.failure(context.getString(R.string.status_route_failed, readableError(e)));
++        }
++    }
++
++    static RouteResult clearPreferredDeviceForMedia(Context context) {
++        try {
++            AudioManager audioManager = getAudioManager(context);
++            Object strategy = findMediaProductStrategy();
++            Method removePreferred = findMethod(
++                    AudioManager.class,
++                    "removePreferredDeviceForStrategy",
++                    strategy.getClass());
++            Object result = removePreferred.invoke(audioManager, strategy);
++            if (Boolean.TRUE.equals(result)) {
++                return RouteResult.success(context.getString(R.string.status_default_selected));
++            }
++            return RouteResult.failure(context.getString(R.string.status_default_rejected));
++        } catch (Throwable e) {
++            Log.e(TAG, "Unable to clear preferred media output", e);
++            return RouteResult.failure(context.getString(R.string.status_route_failed, readableError(e)));
++        }
++    }
++
++    private static SharedPreferences prefs(Context context) {
++        return context.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
++    }
++
++    private static AudioManager getAudioManager(Context context) {
++        return (AudioManager) context.getSystemService(Context.AUDIO_SERVICE);
++    }
++
++    private static Object findMediaProductStrategy() throws Exception {
++        Class<?> strategyClass = Class.forName("android.media.audiopolicy.AudioProductStrategy");
++        Method getStrategies = findMethod(strategyClass, "getAudioProductStrategies");
++        Object strategiesObject = getStrategies.invoke(null);
++        if (!(strategiesObject instanceof List)) {
++            throw new IllegalStateException("Audio product strategies are unavailable");
++        }
++
++        AudioAttributes mediaAttributes = new AudioAttributes.Builder()
++                .setUsage(AudioAttributes.USAGE_MEDIA)
++                .build();
++        List<?> strategies = (List<?>) strategiesObject;
++        for (Object strategy : strategies) {
++            Method supports = findMethod(strategy.getClass(), "supportsAudioAttributes",
++                    AudioAttributes.class);
++            Object supported = supports.invoke(strategy, mediaAttributes);
++            if (Boolean.TRUE.equals(supported)) {
++                return strategy;
++            }
++        }
++
++        throw new IllegalStateException("No media audio product strategy found");
++    }
++
++    private static Object createAudioDeviceAttributes(AudioDeviceInfo device) throws Exception {
++        Class<?> attributesClass = Class.forName("android.media.AudioDeviceAttributes");
++        try {
++            Constructor<?> constructor = attributesClass.getConstructor(AudioDeviceInfo.class);
++            return constructor.newInstance(device);
++        } catch (NoSuchMethodException ignored) {
++            Constructor<?> constructor = attributesClass.getConstructor(
++                    Integer.TYPE, Integer.TYPE, String.class);
++            return constructor.newInstance(ROLE_OUTPUT, device.getType(), addressFor(device));
++        }
++    }
++
++    private static Method findMethod(Class<?> owner, String name, Class<?>... parameterTypes)
++            throws NoSuchMethodException {
++        try {
++            return owner.getMethod(name, parameterTypes);
++        } catch (NoSuchMethodException publicMissing) {
++            Method method = owner.getDeclaredMethod(name, parameterTypes);
++            method.setAccessible(true);
++            return method;
++        }
++    }
++
++    private static boolean isSelectableOutput(AudioDeviceInfo device) {
++        if (device == null || !device.isSink()) {
++            return false;
++        }
++
++        int type = device.getType();
++        if (type == TYPE_TELEPHONY || type == TYPE_BUS) {
++            return false;
++        }
++
++        return true;
++    }
++
++    private static String labelFor(AudioDeviceInfo device) {
++        String product = safeString(device.getProductName());
++        String type = typeLabel(device.getType());
++        String address = addressFor(device);
++
++        if (!TextUtils.isEmpty(product) && !TextUtils.equals(product, type)) {
++            if (!TextUtils.isEmpty(address)) {
++                return product + " (" + type + ", " + address + ")";
++            }
++            return product + " (" + type + ")";
++        }
++
++        if (!TextUtils.isEmpty(address)) {
++            return type + " (" + address + ")";
++        }
++        return type;
++    }
++
++    private static String typeLabel(int type) {
++        switch (type) {
++            case AudioDeviceInfo.TYPE_BUILTIN_SPEAKER:
++                return "Built-in speaker";
++            case AudioDeviceInfo.TYPE_WIRED_HEADSET:
++                return "Wired headset";
++            case AudioDeviceInfo.TYPE_WIRED_HEADPHONES:
++                return "Wired headphones";
++            case AudioDeviceInfo.TYPE_LINE_ANALOG:
++                return "Analog line out";
++            case AudioDeviceInfo.TYPE_LINE_DIGITAL:
++                return "Digital line out";
++            case AudioDeviceInfo.TYPE_BLUETOOTH_A2DP:
++                return "Bluetooth audio";
++            case AudioDeviceInfo.TYPE_HDMI:
++                return "HDMI";
++            case AudioDeviceInfo.TYPE_HDMI_ARC:
++                return "HDMI ARC";
++            case AudioDeviceInfo.TYPE_USB_DEVICE:
++                return "USB audio";
++            case AudioDeviceInfo.TYPE_USB_ACCESSORY:
++                return "USB accessory";
++            case AudioDeviceInfo.TYPE_DOCK:
++                return "Dock";
++            case AudioDeviceInfo.TYPE_FM:
++                return "FM";
++            case AudioDeviceInfo.TYPE_AUX_LINE:
++                return "Aux line";
++            case TYPE_USB_HEADSET:
++                return "USB headset";
++            case TYPE_TELEPHONY:
++                return "Telephony route";
++            case TYPE_BUS:
++                return "Audio bus";
++            default:
++                return "Audio device " + type;
++        }
++    }
++
++    private static String safeString(CharSequence value) {
++        return value == null ? "" : value.toString();
++    }
++
++    private static String addressFor(AudioDeviceInfo device) {
++        try {
++            Method method = findMethod(device.getClass(), "getAddress");
++            Object address = method.invoke(device);
++            return address == null ? "" : address.toString();
++        } catch (Throwable ignored) {
++            return "";
++        }
++    }
++
++    private static String readableError(Throwable throwable) {
++        Throwable current = throwable;
++        if (current instanceof InvocationTargetException
++                && ((InvocationTargetException) current).getTargetException() != null) {
++            current = ((InvocationTargetException) current).getTargetException();
++        }
++        String message = current.getMessage();
++        if (!TextUtils.isEmpty(message)) {
++            return current.getClass().getSimpleName() + ": " + message;
++        }
++        return current.getClass().getSimpleName();
++    }
++
++    static final class RouteItem {
++        final AudioDeviceInfo device;
++        final int type;
++        final String address;
++        final String label;
++
++        static RouteItem systemDefault(String label) {
++            return new RouteItem(null, ROUTE_DEFAULT, "", label);
++        }
++
++        RouteItem(AudioDeviceInfo device, int type, String address, String label) {
++            this.device = device;
++            this.type = type;
++            this.address = address;
++            this.label = label;
++        }
++
++        boolean isDefault() {
++            return type == ROUTE_DEFAULT;
++        }
++
++        @Override
++        public String toString() {
++            return label;
++        }
++    }
++
++    static final class RouteResult {
++        final boolean success;
++        final String message;
++
++        static RouteResult success(String message) {
++            return new RouteResult(true, message);
++        }
++
++        static RouteResult failure(String message) {
++            return new RouteResult(false, message);
++        }
++
++        private RouteResult(boolean success, String message) {
++            this.success = success;
++            this.message = message;
++        }
++    }
++}
+diff --git a/AudioOutputSwitch/src/org/lineageos/tv/audiooutput/BootReceiver.java b/AudioOutputSwitch/src/org/lineageos/tv/audiooutput/BootReceiver.java
+new file mode 100644
+index 0000000..57a600e
+--- /dev/null
++++ b/AudioOutputSwitch/src/org/lineageos/tv/audiooutput/BootReceiver.java
+@@ -0,0 +1,26 @@
++package org.lineageos.tv.audiooutput;
++
++import android.content.BroadcastReceiver;
++import android.content.Context;
++import android.content.Intent;
++import android.util.Log;
++
++public final class BootReceiver extends BroadcastReceiver {
++    private static final String TAG = "AudioOutputSwitch";
++    private static final String ACTION_LOCKED_BOOT_COMPLETED =
++            "android.intent.action.LOCKED_BOOT_COMPLETED";
++
++    @Override
++    public void onReceive(Context context, Intent intent) {
++        String action = intent == null ? null : intent.getAction();
++        if (!Intent.ACTION_BOOT_COMPLETED.equals(action)
++                && !ACTION_LOCKED_BOOT_COMPLETED.equals(action)) {
++            return;
++        }
++
++        AudioRouteManager.RouteResult result = AudioRouteManager.applySavedRoute(context);
++        if (!result.success) {
++            Log.w(TAG, result.message);
++        }
++    }
++}
+diff --git a/device.mk b/device.mk
+index 8a45e65..573869c 100644
+--- a/device.mk
++++ b/device.mk
+@@ -174,6 +174,9 @@ PRODUCT_SYSTEM_DEFAULT_PROPERTIES += \
+ $(foreach f,$(wildcard $(LOCAL_PATH)/permissions/*.xml),\
+     $(eval PRODUCT_COPY_FILES += $(f):$(TARGET_COPY_OUT_SYSTEM_EXT)/etc/permissions/$(notdir $f)))
+ 
++PRODUCT_COPY_FILES += \
++    $(LOCAL_PATH)/sysconfig/hiddenapi-package-whitelist-org.lineageos.tv.audiooutput.xml:$(TARGET_COPY_OUT_SYSTEM_EXT)/etc/sysconfig/hiddenapi-package-whitelist-org.lineageos.tv.audiooutput.xml
++
+ # Get emulated storage settings
+ #$(call inherit-product, $(SRC_TARGET_DIR)/product/emulated_storage.mk)
+ 
+diff --git a/fstab.internal.x86 b/fstab.internal.x86
+index a9809d9..3ae079f 100644
+--- a/fstab.internal.x86
++++ b/fstab.internal.x86
+@@ -2,17 +2,17 @@ none			/cache		tmpfs	nosuid,nodev,noatime	defaults
+ /dev/block/by-name/misc     /misc   emmc    defaults        defaults
+ 
+ /devices/*/block/sr*		auto	auto	defaults		voldmanaged=cdrom:auto
+-/devices/*/usb*/*		auto	auto	defaults		voldmanaged=usb:auto,noemulatedsd
++/devices/*/usb*/*		auto	auto	defaults		voldmanaged=usb:auto,noemulatedsd,encryptable=userdata
+ /devices/*/mmc0:a*/*		auto	auto	defaults		voldmanaged=sdcard1:auto,encryptable=userdata
+ /devices/*/*sdmmc*/*		auto	auto	defaults		voldmanaged=sdcard1:auto,encryptable=userdata
+ /devices/*/80860F*:*/mmc_*	auto	auto	defaults		voldmanaged=sdcard1:auto,encryptable=userdata
+ /devices/*/000*:0*:*/000*:0*:*/mmc_*	auto	auto	defaults		voldmanaged=sdcard1:auto,encryptable=userdata
+ /devices/*/PNP0FFF:00/mmc_*	auto	auto	defaults		voldmanaged=sdcard1:auto,encryptable=userdata
+-/devices/*/*/sd*		auto	auto	defaults,uid=1000,gid=1000		voldmanaged=usbdisk,noemulatedsd
+-/devices/*/*/hd*		auto	auto	defaults,uid=1000,gid=1000		voldmanaged=usbdisk,noemulatedsd
+-/devices/*/*/vd*		auto	auto	defaults,uid=1000,gid=1000		voldmanaged=usbdisk,noemulatedsd
+-/devices/*/*/nvme*		auto	auto	defaults,uid=1000,gid=1000		voldmanaged=usbdisk,noemulatedsd
+-/devices/*/*/xvd*		auto	auto	defaults,uid=1000,gid=1000		voldmanaged=usbdisk,noemulatedsd
++/devices/*/*/sd*		auto	auto	defaults,uid=1000,gid=1000		voldmanaged=usbdisk,noemulatedsd,encryptable=userdata
++/devices/*/*/hd*		auto	auto	defaults,uid=1000,gid=1000		voldmanaged=usbdisk,noemulatedsd,encryptable=userdata
++/devices/*/*/vd*		auto	auto	defaults,uid=1000,gid=1000		voldmanaged=usbdisk,noemulatedsd,encryptable=userdata
++/devices/*/*/nvme*		auto	auto	defaults,uid=1000,gid=1000		voldmanaged=usbdisk,noemulatedsd,encryptable=userdata
++/devices/*/*/xvd*		auto	auto	defaults,uid=1000,gid=1000		voldmanaged=usbdisk,noemulatedsd,encryptable=userdata
+ 
+ share /mnt/vendor/shared virtiofs nosuid,nodev,noatime nofail
+ share /mnt/vendor/shared 9p trans=virtio,version=9p2000.L,nosuid,nodev,noatime nofail
+diff --git a/fstab.x86 b/fstab.x86
+index fc7127f..d33183d 100644
+--- a/fstab.x86
++++ b/fstab.x86
+@@ -3,7 +3,7 @@ none			/cache		tmpfs	nosuid,nodev,noatime	defaults
+ /dev/block/by-name/misc     /misc   emmc    defaults        defaults
+ 
+ /devices/*/block/sr*		auto	auto	defaults		voldmanaged=cdrom:auto
+-/devices/*/usb*/*		auto	auto	defaults		voldmanaged=usbdisk:auto,noemulatedsd
++/devices/*/usb*/*		auto	auto	defaults		voldmanaged=usbdisk:auto,noemulatedsd,encryptable=userdata
+ /devices/*/mmc0:a*/*		auto	auto	defaults		voldmanaged=sdcard1:auto,encryptable=userdata
+ /devices/*/*sdmmc*/*		auto	auto	defaults		voldmanaged=sdcard1:auto,encryptable=userdata
+ /devices/*/80860F*:*/mmc_*	auto	auto	defaults		voldmanaged=sdcard1:auto,encryptable=userdata
+diff --git a/packages.mk b/packages.mk
+index 8cbe244..a04c1ef 100644
+--- a/packages.mk
++++ b/packages.mk
+@@ -121,4 +121,5 @@ PRODUCT_PACKAGES += blisspath boot-mode-selection.sh recovery.bms.sh
+ 
+ ## ATV
+ PRODUCT_PACKAGES += \
+-    DocumentsUI
++    DocumentsUI \
++    AudioOutputSwitch
+diff --git a/permissions/privapp-permissions-org.lineageos.tv.audiooutput.xml b/permissions/privapp-permissions-org.lineageos.tv.audiooutput.xml
+new file mode 100644
+index 0000000..3531325
+--- /dev/null
++++ b/permissions/privapp-permissions-org.lineageos.tv.audiooutput.xml
+@@ -0,0 +1,7 @@
++<?xml version="1.0" encoding="utf-8"?>
++<permissions>
++    <privapp-permissions package="org.lineageos.tv.audiooutput">
++        <permission name="android.permission.MODIFY_AUDIO_ROUTING" />
++        <permission name="android.permission.MODIFY_AUDIO_SETTINGS" />
++    </privapp-permissions>
++</permissions>
+diff --git a/properties/system.prop b/properties/system.prop
+index d0dd46a..ef6f976 100644
+--- a/properties/system.prop
++++ b/properties/system.prop
+@@ -4,6 +4,9 @@
+ 
+ persist.bluetooth.enablenewavrcp=true
+ 
++# Make public USB storage app-visible on Android TV x86.
++persist.sys.adoptable=force_on
++
+ # Set the Bluetooth Class of Device
+ # Service Field: 0x5A -> 90
+ #    Bit 17: Networking
+diff --git a/sysconfig/hiddenapi-package-whitelist-org.lineageos.tv.audiooutput.xml b/sysconfig/hiddenapi-package-whitelist-org.lineageos.tv.audiooutput.xml
+new file mode 100644
+index 0000000..26466e1
+--- /dev/null
++++ b/sysconfig/hiddenapi-package-whitelist-org.lineageos.tv.audiooutput.xml
+@@ -0,0 +1,4 @@
++<?xml version="1.0" encoding="utf-8"?>
++<config>
++    <hidden-api-whitelisted-app package="org.lineageos.tv.audiooutput" />
++</config>
