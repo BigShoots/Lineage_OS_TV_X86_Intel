@@ -6,11 +6,13 @@ The working target was `lineage-21.0-20260331-UNOFFICIAL-x86_64_tv-signed.iso` o
 
 ## Improvements Over Stock
 
-- Adds a privileged Android TV audio output switcher at the existing TV Settings sound entry point.
+- Adds a privileged Android TV audio output switcher under Display & Sound > Sound.
 - Persists the selected media output device and reapplies it after boot.
 - Filters unsafe/bogus policy routes such as telephony and bus outputs.
 - Exposes the primary HDMI/DisplayPort PCM path to Android audio policy so media apps can route to HDMI audio.
 - Makes public USB storage app-visible on Android TV x86 by enabling adoptable-style vold visibility.
+- Adds a Fire TV remote keylayout for the observed Bluetooth HID remote (`0171:0413`) so the menu button opens Android Settings.
+- Adds a boot helper that requests saved Wi-Fi reconnect and bonded Bluetooth HID reconnect after startup.
 - Includes scripts to integrate a user-supplied MindTheGapps Android TV x86_64 package into the ISO.
 - Includes ADB probes for audio routing, HDMI PCM, USB storage, CEC, HDR, and app-level playback debugging.
 
@@ -19,6 +21,8 @@ The working target was `lineage-21.0-20260331-UNOFFICIAL-x86_64_tv-signed.iso` o
 - The GApps ZIP is not included in this repository. Place your own compatible MindTheGapps ATV x86_64 Android 14 ZIP in the workspace before running the integration script.
 - The tested Intel setup did not expose Android HDMI-CEC support.
 - The tested Intel setup did not advertise HDR output support.
+- Fire TV remote microphone input was not exposed as a standard Android audio input during testing; the voice button can launch search, but speech capture depends on a usable microphone device.
+- Wi-Fi and Bluetooth reconnect helpers are best-effort image-side fixes and should be validated on the exact mini PC after flashing.
 - Material Files should use normal file access, not root-only mode, because this build has ADB root but not a normal `su` provider.
 
 ## Final Tested ISO
@@ -29,17 +33,19 @@ The local build produced:
 
 SHA-256:
 
-`cbd4129200c3685ef0108e761d8531695becf858ba79e5dc2a9ae8079a78e8d1`
+`9a568035817b9cdad3067e038ae69197152b9d4c617ab13b6526f197ec6bb62b`
 
 Size:
 
-`2812321792` bytes
+`2812338176` bytes
 
 GitHub release assets must be under 2 GiB each, so the ISO should be uploaded as multipart archives.
 
 ## Repository Layout
 
 - `audio-output-switch/app`: privileged audio switcher app source.
+- `audio-output-switch/overlay`: static TV Settings overlay that places the switcher in Display & Sound > Sound.
+- `audio-output-switch/keylayout`: Fire TV remote keylayout used by the image patch.
 - `audio-output-switch/diagnostics`: ADB test and probe scripts used during bring-up.
 - `audio-output-switch/*.xml`: privapp and hidden API allowlist files for the switcher.
 - `scripts`: image patch, packaging, GApps integration, and validation scripts.
@@ -60,6 +66,7 @@ High-level flow:
 bash scripts/install_audio_switcher_to_system_img.sh
 bash scripts/install_primary_hdmi_policy_to_system_img.sh
 bash scripts/install_usb_storage_visibility_to_system_img.sh
+bash scripts/install_fire_remote_keylayout_to_system_img.sh
 bash scripts/integrate_mindthegapps.sh /path/to/MindTheGapps-14.0.0-x86_64-ATV-full.zip
 bash scripts/package_gapps_iso.sh
 bash scripts/validate_gapps_iso.sh

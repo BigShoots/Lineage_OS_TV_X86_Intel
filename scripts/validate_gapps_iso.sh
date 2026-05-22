@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-WORKSPACE="${WORKSPACE:-$(cd "$(dirname "$0")/.." && pwd)}"
+WORKSPACE="$(cd "$(dirname "$0")/../.." && pwd)"
 ISO="${1:-$WORKSPACE/out/lineage-21.0-20260331-UNOFFICIAL-x86_64_tv-audio-output-gapps.iso}"
 STAGE="$WORKSPACE/work/validate-gapps"
 EFS="$STAGE/system.efs"
@@ -27,11 +27,16 @@ mount -o loop,ro "$EFS_MNT/system.img" "$SYSTEM_MNT"
 echo "== audio switcher files =="
 for path in \
     system/system_ext/priv-app/AudioOutputSwitch/AudioOutputSwitch.apk \
+    system/system_ext/overlay/AudioOutputSettingsOverlay/AudioOutputSettingsOverlay.apk \
     system/system_ext/etc/permissions/privapp-permissions-org.lineageos.tv.audiooutput.xml \
     system/system_ext/etc/sysconfig/hiddenapi-package-whitelist-org.lineageos.tv.audiooutput.xml; do
     ls -Zl "$SYSTEM_MNT/$path"
 done
-test ! -e "$SYSTEM_MNT/system/system_ext/overlay/AudioOutputSettingsOverlay"
+
+echo "== Fire TV remote keylayout =="
+ls -Zl "$SYSTEM_MNT/system/usr/keylayout/Vendor_0171_Product_0413.kl"
+grep -nE 'key[[:space:]]+139[[:space:]]+SETTINGS' \
+    "$SYSTEM_MNT/system/usr/keylayout/Vendor_0171_Product_0413.kl"
 
 echo "== primary HDMI audio policy =="
 grep -n 'HDMI Out' "$SYSTEM_MNT/system/vendor/etc/audio_policy_configuration.xml"
@@ -61,6 +66,7 @@ test ! -e "$SYSTEM_MNT/system/product/priv-app/TVRecommendationsNoGMS"
 
 echo "== APK signature sanity =="
 apksigner verify --verbose "$SYSTEM_MNT/system/system_ext/priv-app/AudioOutputSwitch/AudioOutputSwitch.apk"
+apksigner verify --verbose "$SYSTEM_MNT/system/system_ext/overlay/AudioOutputSettingsOverlay/AudioOutputSettingsOverlay.apk"
 apksigner verify --verbose "$SYSTEM_MNT/system/product/priv-app/PrebuiltGmsCorePano/PrebuiltGmsCorePano.apk" >/dev/null
 apksigner verify --verbose "$SYSTEM_MNT/system/product/priv-app/TVLauncher/TVLauncher.apk" >/dev/null
 

@@ -2,7 +2,7 @@
 set -euo pipefail
 
 PROJECT_DIR="$(cd "$(dirname "$0")" && pwd)"
-WORKSPACE="${WORKSPACE:-$(cd "$PROJECT_DIR/.." && pwd)}"
+WORKSPACE="$(cd "$PROJECT_DIR/../.." && pwd)"
 BUILD_DIR="$PROJECT_DIR/build"
 DIST_DIR="$BUILD_DIR/dist"
 FRAMEWORK_APK="$WORKSPACE/work/apk/original/framework-res.apk"
@@ -14,7 +14,8 @@ AAPT2="${AAPT2:-$LOCAL_BUILD_TOOLS/aapt2}"
 D8="${D8:-$LOCAL_BUILD_TOOLS/d8}"
 
 rm -rf "$BUILD_DIR"
-mkdir -p "$BUILD_DIR/app/gen" "$BUILD_DIR/app/classes" "$DIST_DIR" "$(dirname "$KEYSTORE")"
+mkdir -p "$BUILD_DIR/app/gen" "$BUILD_DIR/app/classes" "$BUILD_DIR/overlay" \
+    "$DIST_DIR" "$(dirname "$KEYSTORE")"
 
 if [ ! -f "$FRAMEWORK_APK" ]; then
     echo "Missing $FRAMEWORK_APK" >&2
@@ -57,7 +58,7 @@ javac -source 1.8 -target 1.8 \
     "${JAVA_SOURCES[@]}"
 
 if [ -x "$D8" ]; then
-    jar cf "$BUILD_DIR/app/classes.jar" -C "$BUILD_DIR/app/classes" .
+    (cd "$BUILD_DIR/app/classes" && zip -qr "$BUILD_DIR/app/classes.jar" .)
     mkdir -p "$BUILD_DIR/app/dex"
     "$D8" --lib "$ANDROID_JAR" --output "$BUILD_DIR/app/dex" "$BUILD_DIR/app/classes.jar"
     cp "$BUILD_DIR/app/dex/classes.dex" "$BUILD_DIR/app/classes.dex"
@@ -75,6 +76,25 @@ apksigner sign \
     "$BUILD_DIR/app/audio-output-aligned.apk"
 apksigner verify --verbose "$DIST_DIR/AudioOutputSwitch.apk"
 
-echo "Skipping TvSettings resource overlay; the platform Settings fragment expects exact stock XML keys."
+"$AAPT2" compile --dir "$PROJECT_DIR/overlay/res" -o "$BUILD_DIR/overlay/resources.zip"
+"$AAPT2" link \
+    -o "$BUILD_DIR/overlay/audio-output-settings-overlay-unsigned.apk" \
+    -I "$FRAMEWORK_APK" \
+    -I "$TV_SETTINGS_APK" \
+    --manifest "$PROJECT_DIR/overlay/AndroidManifest.xml" \
+    --auto-add-overlay \
+    --min-sdk-version 23 \
+    --target-sdk-version 34 \
+    "$BUILD_DIR/overlay/resources.zip"
+zipalign -f 4 \
+    "$BUILD_DIR/overlay/audio-output-settings-overlay-unsigned.apk" \
+    "$BUILD_DIR/overlay/audio-output-settings-overlay-aligned.apk"
+apksigner sign \
+    --ks "$KEYSTORE" \
+    --ks-pass pass:changeit \
+    --key-pass pass:changeit \
+    --out "$DIST_DIR/AudioOutputSettingsOverlay.apk" \
+    "$BUILD_DIR/overlay/audio-output-settings-overlay-aligned.apk"
+apksigner verify --verbose "$DIST_DIR/AudioOutputSettingsOverlay.apk"
 
 ls -lh "$DIST_DIR"

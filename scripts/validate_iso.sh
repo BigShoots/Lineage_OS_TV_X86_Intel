@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-WORKSPACE="${WORKSPACE:-$(cd "$(dirname "$0")/.." && pwd)}"
+WORKSPACE="$(cd "$(dirname "$0")/../.." && pwd)"
 OUT_ISO="$WORKSPACE/out/lineage-21.0-20260331-UNOFFICIAL-x86_64_tv-audio-output.iso"
 EFS_MNT="$WORKSPACE/work/system/patched-efs-mnt"
 SYSTEM_MNT="$WORKSPACE/work/system/patched-system-mnt"

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-WORKSPACE="${WORKSPACE:-$(cd "$(dirname "$0")/.." && pwd)}"
+WORKSPACE="$(cd "$(dirname "$0")/../.." && pwd)"
 SYSTEM_IMG="$WORKSPACE/work/system/system.img"
 MNT="$WORKSPACE/work/system/usb-storage-visibility-mnt"
 

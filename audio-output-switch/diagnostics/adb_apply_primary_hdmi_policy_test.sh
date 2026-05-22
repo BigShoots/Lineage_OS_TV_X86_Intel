@@ -2,9 +2,9 @@
 set -u
 
 DEVICE="${1:-172.16.0.153:5555}"
-PATCHED="audio-output-switch/build/live-audio_policy_configuration.xml"
+PATCHED="work/audio-output-switch/build/live-audio_policy_configuration.xml"
 REMOTE="/data/local/tmp/audio_policy_configuration.primary_hdmi.xml"
-JAR="audio-output-switch/build/adb-harness/dist/AudioRouteCli.jar"
+JAR="work/audio-output-switch/build/adb-harness/dist/AudioRouteCli.jar"
 REMOTE_JAR="/data/local/tmp/AudioRouteCli.jar"
 MAIN="org.lineageos.tv.audiooutput.AudioRouteCli"
 
@@ -39,7 +39,7 @@ dumpsys audio | sed -n "/- STREAM_MUSIC:/,/^- STREAM_ALARM/p"
 '
 
 echo "== route harness list =="
-bash audio-output-switch/build_adb_harness.sh >/dev/null
+bash work/audio-output-switch/build_adb_harness.sh >/dev/null
 adb -s "$DEVICE" push "$JAR" "$REMOTE_JAR" >/dev/null
 adb -s "$DEVICE" shell "CLASSPATH=$REMOTE_JAR app_process /system/bin $MAIN list" || true
 

@@ -2,7 +2,7 @@
 set -u
 
 DEVICE="${1:-172.16.0.153:5555}"
-JAR="audio-output-switch/build/adb-harness/dist/AudioRouteCli.jar"
+JAR="work/audio-output-switch/build/adb-harness/dist/AudioRouteCli.jar"
 REMOTE="/data/local/tmp/AudioRouteCli.jar"
 MAIN="org.lineageos.tv.audiooutput.AudioRouteCli"
 
@@ -34,7 +34,7 @@ echo "--- preferred media strategy"; dumpsys audio | sed -n "/Preferred devices 
 '
 
 echo "== route harness: clear and list =="
-bash audio-output-switch/build_adb_harness.sh >/dev/null
+bash work/audio-output-switch/build_adb_harness.sh >/dev/null
 adb -s "$DEVICE" push "$JAR" "$REMOTE" >/dev/null
 adb -s "$DEVICE" shell "CLASSPATH=$REMOTE app_process /system/bin $MAIN clear" || true
 adb -s "$DEVICE" shell "CLASSPATH=$REMOTE app_process /system/bin $MAIN list" || true

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-WORKSPACE="${WORKSPACE:-$(cd "$(dirname "$0")/.." && pwd)}"
+WORKSPACE="$(cd "$(dirname "$0")/../.." && pwd)"
 GAPPS_ZIP="${1:-/mnt/c/Users/Student/Downloads/MindTheGapps-14.0.0-x86_64-ATV-full-20250624_164100 (2).zip}"
 SYSTEM_IMG="$WORKSPACE/work/system/system.img"
 STAGE="$WORKSPACE/work/gapps"

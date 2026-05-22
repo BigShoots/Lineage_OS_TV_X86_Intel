@@ -2,7 +2,7 @@
 set -u
 
 DEVICE="${1:-172.16.0.153:5555}"
-WAV_LOCAL="audio-output-switch/build/hdmi-test-tone.wav"
+WAV_LOCAL="work/audio-output-switch/build/hdmi-test-tone.wav"
 WAV_REMOTE="/data/local/tmp/hdmi-test-tone.wav"
 
 mkdir -p "$(dirname "$WAV_LOCAL")"
@@ -12,7 +12,7 @@ import os
 import struct
 import wave
 
-path = "audio-output-switch/build/hdmi-test-tone.wav"
+path = "work/audio-output-switch/build/hdmi-test-tone.wav"
 rate = 48000
 seconds = 1.2
 freq = 880.0

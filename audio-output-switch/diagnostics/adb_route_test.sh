@@ -2,11 +2,11 @@
 set -euo pipefail
 
 DEVICE="${1:-172.16.0.153:5555}"
-JAR="audio-output-switch/build/adb-harness/dist/AudioRouteCli.jar"
+JAR="work/audio-output-switch/build/adb-harness/dist/AudioRouteCli.jar"
 REMOTE="/data/local/tmp/AudioRouteCli.jar"
 MAIN="org.lineageos.tv.audiooutput.AudioRouteCli"
 
-bash audio-output-switch/build_adb_harness.sh
+bash work/audio-output-switch/build_adb_harness.sh
 
 adb connect "$DEVICE" >/dev/null || true
 adb -s "$DEVICE" root >/dev/null || true

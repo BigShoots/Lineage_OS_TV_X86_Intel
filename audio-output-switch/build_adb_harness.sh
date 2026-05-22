@@ -2,7 +2,7 @@
 set -euo pipefail
 
 PROJECT_DIR="$(cd "$(dirname "$0")" && pwd)"
-WORKSPACE="${WORKSPACE:-$(cd "$PROJECT_DIR/.." && pwd)}"
+WORKSPACE="$(cd "$PROJECT_DIR/../.." && pwd)"
 BUILD_DIR="$PROJECT_DIR/build/adb-harness"
 ANDROID_JAR="/usr/lib/android-sdk/platforms/android-23/android.jar"
 LOCAL_BUILD_TOOLS="$WORKSPACE/tools/android-build-tools/android-14/android-14"

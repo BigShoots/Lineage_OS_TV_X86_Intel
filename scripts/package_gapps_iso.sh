@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-WORKSPACE="${WORKSPACE:-$(cd "$(dirname "$0")/.." && pwd)}"
+WORKSPACE="$(cd "$(dirname "$0")/../.." && pwd)"
 ORIGINAL_ISO="$WORKSPACE/lineage-21.0-20260331-UNOFFICIAL-x86_64_tv-signed.iso"
 EROFS_ROOT="$WORKSPACE/work/system/erofs-build-root"
 SYSTEM_IMG="$WORKSPACE/work/system/system.img"
